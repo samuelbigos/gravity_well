@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://chgq7mjhw0jgv"
+path="res://.godot/imported/world_sim.glsl-2f0dd5047e395b7fd5323b001b6ebe5c.res"
+
+[deps]
+
+source_file="res://assets/compute/world_sim.glsl"
+dest_files=["res://.godot/imported/world_sim.glsl-2f0dd5047e395b7fd5323b001b6ebe5c.res"]
+
+[params]
+
