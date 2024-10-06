@@ -40,6 +40,15 @@ public partial class Game : Singleton<Game>
 			BoidController.Instance.SpawnGlorp();
 		}
 	}
+	
+	// TODO: pixel health points.
+	// TODO: crashed spaceship.
+	// TODO: energy
+	// TODO: boid dig jumping
+	// TODO: big dig throwing (scattered pixels damage more pixels)
+	// TODO: glorp space agency
+	// TODO: mining space lasers
+	// TODO: excavators
 
 	private void _ImGuiStats()
 	{
