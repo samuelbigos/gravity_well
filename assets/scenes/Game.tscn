@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://celxdilw6hjt0"]
+[gd_scene load_steps=20 format=3 uid="uid://celxdilw6hjt0"]
 
 [ext_resource type="Script" path="res://src/Game.cs" id="1_wfm74"]
 [ext_resource type="Script" path="res://src/World.cs" id="1_xdkc1"]
@@ -12,15 +12,23 @@
 [ext_resource type="Script" path="res://src/Metagame.cs" id="10_bt7vd"]
 [ext_resource type="Script" path="res://src/Resources.cs" id="11_ao8ms"]
 [ext_resource type="PackedScene" uid="uid://cbjrdw6udu1wb" path="res://assets/scenes/Spaceship.tscn" id="12_o1hhx"]
+[ext_resource type="PackedScene" uid="uid://cjvyxqf62uq1p" path="res://assets/scenes/Factory.tscn" id="13_peo6j"]
+[ext_resource type="PackedScene" uid="uid://bld8u0wgtxo7y" path="res://assets/scenes/Excavator.tscn" id="14_if22u"]
+[ext_resource type="PackedScene" uid="uid://coobrgx2mqsx" path="res://assets/scenes/SolarFarm.tscn" id="15_jx008"]
+[ext_resource type="Script" path="res://src/FloatingDamageManager.cs" id="15_tij44"]
+[ext_resource type="PackedScene" uid="uid://d3ktw2gb8weqh" path="res://assets/scenes/SpaceCentre.tscn" id="16_n6hkh"]
+[ext_resource type="PackedScene" uid="uid://cvnu5hxk7nrdy" path="res://assets/scenes/FloatingDamage.tscn" id="16_pdwqb"]
+[ext_resource type="PackedScene" uid="uid://dasuul5edekmm" path="res://assets/scenes/SpaceLaser.tscn" id="17_0oxvf"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_wfm74")
 
-[node name="World" type="Node" parent="." node_paths=PackedStringArray("_sprite")]
+[node name="World" type="Node" parent="." node_paths=PackedStringArray("_sprite", "_label")]
 script = ExtResource("1_xdkc1")
 _worldRadius = 128.0
 _sprite = NodePath("WorldTexture")
 _pixelScene = ExtResource("3_xaovw")
+_label = NodePath("")
 
 [node name="WorldTexture" type="Sprite2D" parent="World"]
 z_index = -1
@@ -48,3 +56,12 @@ script = ExtResource("11_ao8ms")
 GlorpScene = ExtResource("6_tnhim")
 HouseScene = ExtResource("9_fdln2")
 SpaceshipScene = ExtResource("12_o1hhx")
+FactoryScene = ExtResource("13_peo6j")
+ExcavatorScene = ExtResource("14_if22u")
+SolarFarmScene = ExtResource("15_jx008")
+SpaceCentreScene = ExtResource("16_n6hkh")
+SpaceLaserScene = ExtResource("17_0oxvf")
+
+[node name="FloatingDamage" type="Node" parent="."]
+script = ExtResource("15_tij44")
+_floatingDamageScene = ExtResource("16_pdwqb")

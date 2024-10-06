@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://bld8u0wgtxo7y"]
+
+[ext_resource type="Texture2D" uid="uid://b1w0q3p53dlo3" path="res://assets/sprites/excavator.png" id="1_b8k4d"]
+[ext_resource type="Script" path="res://src/boids/Excavator.cs" id="1_pt4n6"]
+
+[node name="Excavator" type="Node2D" node_paths=PackedStringArray("_sprite")]
+script = ExtResource("1_pt4n6")
+_sprite = NodePath("Sprite2D")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("1_b8k4d")

@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://d3ktw2gb8weqh"]
+
+[ext_resource type="Texture2D" uid="uid://6xlepsttkckx" path="res://assets/sprites/space_centre.png" id="1_btb0g"]
+
+[node name="SpaceCentre" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("1_btb0g")

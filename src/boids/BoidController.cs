@@ -41,17 +41,18 @@ public partial class BoidController : Singleton<BoidController>
         Glorp = 1,
         House = 2,
         Spaceship = 3,
+        ResearchedBuilding = 4,
+        Excavator = 5,
+        SpaceLaser = 6,
     }
     
     public int NumGlorps = 0;
-    public int NumHouses = 0;
 
     private byte[] _boidData;
     private Dictionary<int, Node2D> _boids = new Dictionary<int, Node2D>();
     private Dictionary<Node2D, int> _boidsToData = new Dictionary<Node2D, int>();
 
     public float Gravity => 10.0f;
-    public float GlorpRadius = 2.0f;
     
     public BoidData DataForBoid(int id)
     {
@@ -125,7 +126,7 @@ public partial class BoidController : Singleton<BoidController>
             _spawnedId = _activeBoids;
             _newBoidPosition = position;
             _newBoidType = BoidType.Glorp;
-            _newSpawnedRadius = GlorpRadius;
+            _newSpawnedRadius = Metagame.BaseGlorpRadius;
             
             _activeBoids++;
         }
@@ -161,7 +162,6 @@ public partial class BoidController : Singleton<BoidController>
         Span<BoidData> dataSpan = MemoryMarshal.Cast<byte, BoidData>(new Span<byte>(_boidData, 0, _boidData.Length));
 
         NumGlorps = 0;
-        NumHouses = 0;
         for (int i = 0; i < _activeBoids; i++)
         {
             //GD.Print($"Boid #{i}: Position: {dataSpan[i].position} Velocity: {dataSpan[i].velocity}");
@@ -171,8 +171,12 @@ public partial class BoidController : Singleton<BoidController>
             _boids[i].GlobalRotation = Mathf.Atan2(-toCentre.X, toCentre.Y);
             _boids[i].Visible = true;
 
+            if (dataSpan[i].type == (int) BoidType.Excavator)
+            {
+                _boids[i].GlobalRotation = Mathf.Atan2(-toCentre.X, toCentre.Y) * 100.0f;
+            }
+
             if (dataSpan[i].type == (int)BoidType.Glorp) NumGlorps++;
-            if (dataSpan[i].type == (int)BoidType.House) NumHouses++;
         }
     }
 

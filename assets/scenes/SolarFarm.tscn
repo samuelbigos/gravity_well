@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://coobrgx2mqsx"]
+
+[ext_resource type="Texture2D" uid="uid://cdbumdfk4wm4d" path="res://assets/sprites/solar_farm.png" id="1_a2bnh"]
+
+[node name="SolarFarm" type="Sprite2D"]
+texture_filter = 1
+texture = ExtResource("1_a2bnh")

@@ -75,6 +75,11 @@ public static class Utils
     {
         return 1 - Mathf.Pow(1 - t, 3);
     }
+    
+    public static double Ease_CubicIn(double t)
+    {
+        return Mathf.Pow(t, 3);
+    }
 
     public static Godot.Vector2 RandPointOnEdge(this Rect2 rect)
     {

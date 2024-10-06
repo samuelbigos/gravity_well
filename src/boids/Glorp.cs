@@ -17,7 +17,7 @@ public partial class Glorp : Node2D
 	public override void _Process(double delta)
 	{
 		_digTimer -= (float)delta;
-		if (!_jumping && _digTimer < 0.0f && Metagame.Instance.Dig())
+		if (!_jumping && _digTimer < 0.0f && Metagame.Instance.Dig(true))
 		{
 			_digTimer = _jumpTime;
 			_jumping = true;
@@ -25,14 +25,15 @@ public partial class Glorp : Node2D
 		if (_jumping)
 		{
 			float d = -Mathf.Sin((_digTimer / _jumpTime) * Mathf.Pi);
-			_sprite.Position = new Vector2(0.0f, d * Metagame.Instance.ResearchJumpLevel * BoidController.Instance.GlorpRadius * 1.0f);
+			_sprite.Position = new Vector2(0.0f, d * Metagame.Instance.ResearchJumpLevel * Metagame.BaseGlorpRadius * 1.0f);
 			
 			if (_digTimer < 0.0f)
 			{
 				_jumping = false;
 				_sprite.Position = Vector2.Zero;
-				World.Instance.Dig(this);
+				World.Instance.Dig(GlobalPosition, Metagame.BaseGlorpRadius, Metagame.Instance.DigDamage(true));
 				_digTimer = Metagame.Instance.DigFrequency;
+				Game.Instance.GlorpPop();
 			}
 		}
 	}

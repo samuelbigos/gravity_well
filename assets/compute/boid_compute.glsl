@@ -118,7 +118,7 @@ void main()
 		nv0 -= projectUonV(v0, p0 - p1);
 
 		// Walking
-		if (boidType == 1)
+		if (boidType == 1 || boidType == 5)
 		{
 			vec2 down = normalize(p1 - p0);
 			vec2 tangent = normalize(vec2(-down.y, down.x)) * boidData.data[id].dir;
@@ -133,10 +133,24 @@ void main()
 	}
 	else
 	{
-		// Gravity
-		vec2 centre = vec2(params.imageSizeX, params.imageSizeY) * 0.5;
-		vec2 toCentre = normalize(centre - boidPos);
-		totalForce = toCentre * params.gravity;
+		if (boidType != 6) // Gravity
+		{
+			vec2 centre = vec2(params.imageSizeX, params.imageSizeY) * 0.5;
+			vec2 toCentre = normalize(centre - boidPos);
+			totalForce = toCentre * params.gravity;
+		}
+		else // Orbit
+		{
+			float orbitHeight = 128.0f + 48.0f;
+			vec2 centre = vec2(params.imageSizeX, params.imageSizeY) * 0.499;
+			vec2 toCentre = normalize(centre - boidPos);
+			vec2 orbitPos = centre - toCentre * orbitHeight;
+			vec2 toOrbitHeight = normalize(orbitPos - boidPos);
+			totalForce = toOrbitHeight * params.gravity;
+
+			vec2 tangent = normalize(vec2(-toCentre.y, toCentre.x)) * boidData.data[id].dir;
+			boidVel = tangent * 10.0 + toOrbitHeight * 50.0f;
+		}		
 	}
 
 	boidVel += totalForce * params.deltaTime;

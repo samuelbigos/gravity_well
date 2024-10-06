@@ -11,7 +11,8 @@ public partial class World : Singleton<World>
 	[Export] private Sprite2D _sprite;
 	[Export] private float _sdfDistMod = 10.0f;
 	[Export] private PackedScene _pixelScene;
-
+	[Export] public Label _label;
+	
 	public Vector2I Size => new Vector2I(_worldResolution, _worldResolution);
 	public Vector2 Centre => Size / (int)2.0f;
 	public float Radius => _worldRadius;
@@ -49,28 +50,33 @@ public partial class World : Singleton<World>
 	
 	private List<Pixel> _pixels = new List<Pixel>();
 	
-	public void Dig(Glorp glorp)
+	public void Dig(Vector2 position, float radius, float damage)
 	{
 		// Find the nearest pixel to dig.
-		int digRadius = (int)BoidController.Instance.GlorpRadius + 2;
-		Vector2 digOffset = ToCentre(glorp.GlobalPosition) * 0.0f; 
+		int digRadius = (int)radius + 2;
+		Vector2 digOffset = ToCentre(position) * 0.0f;
+		float beforeMaterials = Metagame.Instance.Materials;
 		for (int x = -digRadius; x <= digRadius * 2; x++)
 		{
 			for (int y = -digRadius; y <= digRadius * 2; y++)
 			{
-				if ((new Vector2I(x, y)).LengthSquared() < digRadius * digRadius)
+				if (new Vector2I(x, y).LengthSquared() < digRadius * digRadius)
 				{
-					DigPixel(glorp.GlobalPosition, (Vector2I)(glorp.GlobalPosition + digOffset + new Vector2(x, y)));
+					DigPixel(position, (Vector2I)(position + digOffset + new Vector2(x, y)), damage);
 				}
 			}
 		}
+		if (Metagame.Instance.Materials > beforeMaterials)
+		{
+			FloatingDamageManager.Instance.AddNew(position, Metagame.Instance.Materials - beforeMaterials);
+		}
 	}
 
-	private void DigPixel(Vector2 boidPos, Vector2I pixel)
+	private void DigPixel(Vector2 boidPos, Vector2I pixel, float damage)
 	{
 		if (CheckPixel(pixel))
 		{
-			if (DamagePixel(pixel, Metagame.Instance.DigDamage, out float materials))
+			if (DamagePixel(pixel, damage, out float materials))
 			{
 				DestroyPixel(pixel);
 			}
@@ -107,6 +113,21 @@ public partial class World : Singleton<World>
 		materials = delta;
 		
 		return healthAfter <= 0.0f || Mathf.IsZeroApprox(healthAfter);
+	}
+
+	public Vector2 ProjectOntoPixel(Vector2 origin, Vector2 dir)
+	{
+		float dist = 0.0f;
+		while (true)
+		{
+			Vector2 samplePos = origin + dir * dist;
+			if (CheckPixel((Vector2I)samplePos))
+			{
+				return samplePos;
+			}
+			dist += 0.5f;
+			if (dist > 256.0f) return Centre;
+		}
 	}
 
 	public float PixelColorToHealth(Color col)
@@ -358,9 +379,10 @@ public partial class World : Singleton<World>
 				pixel.WasFree = true;
 			}
 		}
-		
-		foreach (int i in toRemove)
+
+		for (int index = toRemove.Count - 1; index >= 0; index--)
 		{
+			int i = toRemove[index];
 			_pixels[i].QueueFree();
 			_pixels.RemoveAt(i);
 		}
