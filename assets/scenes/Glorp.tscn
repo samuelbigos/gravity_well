@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://b2el2ufygdkgk"]
+
+[ext_resource type="Texture2D" uid="uid://dxclyltqk3q54" path="res://assets/sprites/glorp.png" id="1_2psco"]
+[ext_resource type="Script" path="res://src/boids/Glorp.cs" id="2_hgv5v"]
+
+[node name="Node2D" type="Node2D" node_paths=PackedStringArray("_sprite")]
+script = ExtResource("2_hgv5v")
+_sprite = NodePath("Glorp")
+
+[node name="Glorp" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("1_2psco")

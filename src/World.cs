@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Godot;
 using ImGuiNET;
 
@@ -10,7 +11,6 @@ public partial class World : Singleton<World>
 	[Export] private Sprite2D _sprite;
 	[Export] private float _sdfDistMod = 10.0f;
 	[Export] private PackedScene _pixelScene;
-	[Export] private float DigEjectionSpeed = 50.0f;
 
 	public Vector2I Size => new Vector2I(_worldResolution, _worldResolution);
 	public Vector2 Centre => Size / (int)2.0f;
@@ -49,18 +49,18 @@ public partial class World : Singleton<World>
 	
 	private List<Pixel> _pixels = new List<Pixel>();
 	
-	public void Dig(Boid boid)
+	public void Dig(Glorp glorp)
 	{
 		// Find the nearest pixel to dig.
 		int digRadius = (int)BoidController.Instance.GlorpRadius + 2;
-		Vector2 digOffset = ToCentre(boid.GlobalPosition) * 0.0f; 
+		Vector2 digOffset = ToCentre(glorp.GlobalPosition) * 0.0f; 
 		for (int x = -digRadius; x <= digRadius * 2; x++)
 		{
 			for (int y = -digRadius; y <= digRadius * 2; y++)
 			{
 				if ((new Vector2I(x, y)).LengthSquared() < digRadius * digRadius)
 				{
-					DigPixel(boid.GlobalPosition, (Vector2I)(boid.GlobalPosition + digOffset + new Vector2(x, y)));
+					DigPixel(glorp.GlobalPosition, (Vector2I)(glorp.GlobalPosition + digOffset + new Vector2(x, y)));
 				}
 			}
 		}
@@ -70,17 +70,54 @@ public partial class World : Singleton<World>
 	{
 		if (CheckPixel(pixel))
 		{
-			_worldImage.SetPixel(pixel.X, pixel.Y, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+			if (DamagePixel(pixel, Metagame.Instance.DigDamage, out float materials))
+			{
+				DestroyPixel(pixel);
+			}
+			CreatePixelParticle(boidPos);
+			Metagame.Instance.Materials += materials;
 			_worldImageDirty = true;
-			Pixel thePixel = _pixelScene.Instantiate<Pixel>();
-			_pixels.Add(thePixel);
-			AddChild(thePixel);
-			thePixel.GlobalPosition = boidPos;
-			Vector2 toCentre = ToCentre(boidPos);
-			Vector2 tangent = toCentre.ToNumerics().Rot90().ToGodot() * (Utils.Rng.Randf() - 1.0f);
-			thePixel._velocity = (tangent * 0.5f - toCentre) * DigEjectionSpeed;
-			Game.Instance.MaterialCount++;
 		}
+	}
+
+	private void DestroyPixel(Vector2I pixel)
+	{
+		_worldImage.SetPixel(pixel.X, pixel.Y, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+		_worldImageDirty = true;
+	}
+
+	private void CreatePixelParticle(Vector2 position)
+	{
+		Pixel thePixel = _pixelScene.Instantiate<Pixel>();
+		_pixels.Add(thePixel);
+		AddChild(thePixel);
+		thePixel.GlobalPosition = position;
+		Vector2 toCentre = ToCentre(position);
+		Vector2 tangent = toCentre.ToNumerics().Rot90().ToGodot() * (Utils.Rng.Randf() - 1.0f);
+		thePixel._velocity = (tangent * 0.5f - toCentre) * Metagame.Instance.DigEjectionSpeed;
+	}
+
+	private bool DamagePixel(Vector2I pixel, float damage, out float materials)
+	{
+		Color current = _worldImage.GetPixel(pixel.X, pixel.Y);
+		float healthBefore = PixelColorToHealth(current);
+		float healthAfter = Mathf.Max(0.0f, healthBefore - damage);
+		float delta = healthBefore - healthAfter;
+		_worldImage.SetPixel(pixel.X, pixel.Y, PixelHealthToColor(healthAfter));
+		materials = delta;
+		
+		return healthAfter <= 0.0f || Mathf.IsZeroApprox(healthAfter);
+	}
+
+	public float PixelColorToHealth(Color col)
+	{
+		return col.G * Metagame.PixelHealth;
+	}
+
+	public Color PixelHealthToColor(float health)
+	{
+		health /= Metagame.PixelHealth;
+		return new Color(1.0f, health, health, 1.0f);
 	}
 
 	public Vector2 ToCentre(Vector2 pos)
@@ -92,7 +129,7 @@ public partial class World : Singleton<World>
 	{
 		if (pos.X < 0 || pos.Y < 0 || pos.X >= _worldResolution || pos.Y >= _worldResolution) return false;
 		Color pixel = _worldImage.GetPixel(pos.X, pos.Y);
-		return pixel.R > 0.5f;
+		return pixel.A > 0.5f;
 	}
 	
 	public override void _Ready()
@@ -307,7 +344,7 @@ public partial class World : Singleton<World>
 						_worldImageDirty = true;
 						break;
 					}
-
+		
 					dist += stepSize;
 					if (dist > 10.0f) // safety.
 					{
@@ -321,7 +358,7 @@ public partial class World : Singleton<World>
 				pixel.WasFree = true;
 			}
 		}
-
+		
 		foreach (int i in toRemove)
 		{
 			_pixels[i].QueueFree();

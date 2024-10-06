@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://svdwaxxr1e2w"]
 
-[ext_resource type="Texture2D" uid="uid://dm6mm0uukb5j0" path="res://assets/house.png" id="1_obnrj"]
+[ext_resource type="Texture2D" uid="uid://dm6mm0uukb5j0" path="res://assets/sprites/house.png" id="1_obnrj"]
 
 [node name="House" type="Sprite2D"]
 texture_filter = 1

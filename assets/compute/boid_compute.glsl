@@ -94,14 +94,11 @@ void main()
 
 	boidRadius += 1.0;
 
-	// Gravity
-	vec2 centre = vec2(params.imageSizeX, params.imageSizeY) * 0.5;
-	vec2 toCentre = normalize(centre - boidPos);
-	vec2 totalForce = toCentre * params.gravity;
-
 	// Collide with terrain
 	float terrainDist = sdf(boidPos);
 	vec2 toSurface = -calcNormal(boidPos);
+
+	vec2 totalForce = vec2(0.0, 0.0);
 
 	vec2 p0 = boidPos;
 	vec2 p1 = boidPos + toSurface * terrainDist;
@@ -133,12 +130,17 @@ void main()
 			// Apply some damping.
 			boidVel = 0.95 * boidVel;
 		}	
-	}	
+	}
+	else
+	{
+		// Gravity
+		vec2 centre = vec2(params.imageSizeX, params.imageSizeY) * 0.5;
+		vec2 toCentre = normalize(centre - boidPos);
+		totalForce = toCentre * params.gravity;
+	}
 
 	boidVel += totalForce * params.deltaTime;
 	boidPos += boidVel * params.deltaTime;
-
-	boidPos += toCentre * params.deltaTime * 10.0f;
 
 	// Write new data.
 	boidData.data[id].pos = boidPos;

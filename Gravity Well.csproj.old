@@ -1,4 +1,4 @@
-<Project Sdk="Godot.NET.Sdk/4.3.0-rc.1">
+<Project Sdk="Godot.NET.Sdk/4.3.0">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net7.0</TargetFramework>
@@ -10,8 +10,5 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ImGui.NET" Version="1.91.0.1" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="assets\" />
   </ItemGroup>
 </Project>

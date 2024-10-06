@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class Pixel : Sprite2D
+public partial class Pixel : Node2D
 {
 	public Vector2 _velocity;
 	public float Lifetime;

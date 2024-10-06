@@ -5,9 +5,6 @@ using System.Runtime.InteropServices;
 
 public partial class BoidController : Singleton<BoidController>
 {
-    [Export] private PackedScene _boidScene;
-    [Export] private PackedScene _houseScene;
-    
     // Compute
     private RenderingDevice _rd;
     private Vector2I _workgroupSize = new Vector2I(32, 32);
@@ -37,13 +34,13 @@ public partial class BoidController : Singleton<BoidController>
 
     private int MAX_BOIDS = 4096;
     private int _activeBoids = 0;
-    private float _replicationCountdown;
     
     public enum BoidType
     {
         Inactive = 0,
         Glorp = 1,
         House = 2,
+        Spaceship = 3,
     }
     
     public int NumGlorps = 0;
@@ -53,18 +50,13 @@ public partial class BoidController : Singleton<BoidController>
     private Dictionary<int, Node2D> _boids = new Dictionary<int, Node2D>();
     private Dictionary<Node2D, int> _boidsToData = new Dictionary<Node2D, int>();
 
-    public float Gravity => 50.0f;
-    public float ReplicationRate => Mathf.Log(BoidController.Instance.NumGlorps);
-    public float ReplicationCountdownMax => 100.0f;
-    public float ReplicationProgress => _replicationCountdown / ReplicationCountdownMax;
-    
+    public float Gravity => 10.0f;
     public float GlorpRadius = 2.0f;
-    public float DigFrequency = 5.0f;
     
-    public BoidData DataForBoid(Boid boid)
+    public BoidData DataForBoid(int id)
     {
         Span<BoidData> dataSpan = MemoryMarshal.Cast<byte, BoidData>(new Span<byte>(_boidData, 0, _boidData.Length));
-        return dataSpan[_boidsToData[boid]];
+        return dataSpan[id];
     }
 
     public override void _EnterTree()
@@ -120,18 +112,18 @@ public partial class BoidController : Singleton<BoidController>
     private BoidType _newBoidType;
     private float _newSpawnedRadius;
 
-    public void SpawnGlorp()
+    public void SpawnGlorp(Vector2 position)
     {
         if (_activeBoids < MAX_BOIDS)
         {
-            _boids[_activeBoids] = _boidScene.Instantiate<Node2D>();
+            _boids[_activeBoids] = Resources.Instance.GlorpScene.Instantiate<Node2D>();
             _boids[_activeBoids].Visible = false;
             AddChild(_boids[_activeBoids]);
             _boidsToData[_boids[_activeBoids]] = _activeBoids;
 
             _spawnedNewBoid = true;
             _spawnedId = _activeBoids;
-            _newBoidPosition = World.Instance.Centre - new Vector2(0.0f, World.Instance.Radius + 64.0f);
+            _newBoidPosition = position;
             _newBoidType = BoidType.Glorp;
             _newSpawnedRadius = GlorpRadius;
             
@@ -139,9 +131,9 @@ public partial class BoidController : Singleton<BoidController>
         }
     }
 
-    public void SpawnHouse()
+    public int SpawnBuilding(PackedScene scene, BoidType type, Vector2 position, float radius)
     {
-        _boids[_activeBoids] = _houseScene.Instantiate<Node2D>();
+        _boids[_activeBoids] = scene.Instantiate<Node2D>();
         _boids[_activeBoids].Visible = false;
         AddChild(_boids[_activeBoids]);
         _boidsToData[_boids[_activeBoids]] = _activeBoids;
@@ -149,12 +141,12 @@ public partial class BoidController : Singleton<BoidController>
         _spawnedNewBoid = true;
         _spawnedId = _activeBoids;
 
-        float height = World.Instance.Radius + 64.0f;
-        _newBoidPosition = World.Instance.Centre + (new Vector2(Utils.Rng.Randf() - 0.5f, Utils.Rng.Randf() - 0.5f)).Normalized() * height;
-        _newBoidType = BoidType.House;
-        _newSpawnedRadius = GlorpRadius * 2.0f;
+        _newBoidPosition = position;
+        _newBoidType = type;
+        _newSpawnedRadius = radius;
         
         _activeBoids++;
+        return _activeBoids - 1;
     }
 
     public override void _Process(double delta)
@@ -182,13 +174,6 @@ public partial class BoidController : Singleton<BoidController>
             if (dataSpan[i].type == (int)BoidType.Glorp) NumGlorps++;
             if (dataSpan[i].type == (int)BoidType.House) NumHouses++;
         }
-
-        _replicationCountdown += ReplicationRate * (float)delta;
-        if (_replicationCountdown > ReplicationCountdownMax && NumGlorps < Game.Instance.MaxPop)
-        {
-            _replicationCountdown = 0.0f;
-            SpawnGlorp();
-        }
     }
 
     private void ExecuteCompute(Rid pipeline, float deltaTime)
@@ -207,7 +192,7 @@ public partial class BoidController : Singleton<BoidController>
             World.Instance.SDFDistMod,
             deltaTime,
             Gravity, // gravity
-            10.0f, // walk speed
+            Metagame.Instance.WalkSpeed, // walk speed
             _spawnedNewBoid ? 1.0f : 0.0f,
             _spawnedId,
             _newBoidPosition.X,

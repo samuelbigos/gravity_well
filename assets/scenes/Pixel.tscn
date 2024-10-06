@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://bx38lhgop2ik6"]
 
-[ext_resource type="Texture2D" uid="uid://ctwm5fnhh2q5" path="res://assets/pixel.png" id="1_4f1mk"]
+[ext_resource type="Texture2D" uid="uid://ctwm5fnhh2q5" path="res://assets/sprites/pixel.png" id="1_4f1mk"]
 [ext_resource type="Script" path="res://src/Pixel.cs" id="2_ho5nx"]
 
 [node name="Pixel" type="Sprite2D"]

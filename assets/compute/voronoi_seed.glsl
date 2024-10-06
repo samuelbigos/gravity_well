@@ -11,10 +11,8 @@ void main()
 	uv.x = int(gl_WorkGroupID.x) * int(gl_WorkGroupSize.x) + int(gl_LocalInvocationID.x);
 	uv.y = int(gl_WorkGroupID.y) * int(gl_WorkGroupSize.y) + int(gl_LocalInvocationID.y);
 
-	float threshold = 0.66;
-
 	float val = imageLoad(_input, uv).r;
-	val = step(threshold, val);
+	val = step(0.000001, val);
 
 	vec2 imageSize = vec2(gl_NumWorkGroups.x * gl_WorkGroupSize.x, gl_NumWorkGroups.y * gl_WorkGroupSize.y);
 	
