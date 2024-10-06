@@ -48,34 +48,38 @@ public partial class World : Singleton<World>
 	private Texture2Drd _texture2Drd = new Texture2Drd();
 	
 	private List<Pixel> _pixels = new List<Pixel>();
-
+	
 	public void Dig(Boid boid)
 	{
 		// Find the nearest pixel to dig.
-		// TODO: Dig radially around the boid.
-		float dist = BoidController.Instance._boidRadius;
-		while (true)
+		int digRadius = (int)BoidController.Instance.GlorpRadius + 2;
+		Vector2 digOffset = ToCentre(boid.GlobalPosition) * 0.0f; 
+		for (int x = -digRadius; x <= digRadius * 2; x++)
 		{
-			Vector2 pos = boid.GlobalPosition;
-			BoidController.BoidData data = BoidController.Instance.DataForBoid(boid);
-			Vector2 offset = data.toSurface * dist;
-			Vector2I pixelPos = new Vector2I((int)(pos.X + offset.X), (int)(pos.Y + offset.Y));
-			pixelPos = pixelPos.Clamp(0, _worldResolution);
-			if (CheckPixel(pixelPos))
+			for (int y = -digRadius; y <= digRadius * 2; y++)
 			{
-				_worldImage.SetPixel(pixelPos.X, pixelPos.Y, new Color(0.0f, 0.0f, 0.0f, 0.0f));
-				_worldImageDirty = true;
-				Pixel thePixel = _pixelScene.Instantiate<Pixel>();
-				_pixels.Add(thePixel);
-				AddChild(thePixel);
-				thePixel.GlobalPosition = pos;
-				Vector2 toCentre = ToCentre(boid.GlobalPosition);
-				Vector2 tangent = toCentre.ToNumerics().Rot90().ToGodot() * -data.dir * (Utils.Rng.Randf() - 1.0f);
-				thePixel._velocity = (tangent * 0.5f - toCentre) * DigEjectionSpeed;
-				break;
+				if ((new Vector2I(x, y)).LengthSquared() < digRadius * digRadius)
+				{
+					DigPixel(boid.GlobalPosition, (Vector2I)(boid.GlobalPosition + digOffset + new Vector2(x, y)));
+				}
 			}
-			dist += 0.5f;
-			if (dist > BoidController.Instance._boidRadius * 2.0f) break;
+		}
+	}
+
+	private void DigPixel(Vector2 boidPos, Vector2I pixel)
+	{
+		if (CheckPixel(pixel))
+		{
+			_worldImage.SetPixel(pixel.X, pixel.Y, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+			_worldImageDirty = true;
+			Pixel thePixel = _pixelScene.Instantiate<Pixel>();
+			_pixels.Add(thePixel);
+			AddChild(thePixel);
+			thePixel.GlobalPosition = boidPos;
+			Vector2 toCentre = ToCentre(boidPos);
+			Vector2 tangent = toCentre.ToNumerics().Rot90().ToGodot() * (Utils.Rng.Randf() - 1.0f);
+			thePixel._velocity = (tangent * 0.5f - toCentre) * DigEjectionSpeed;
+			Game.Instance.MaterialCount++;
 		}
 	}
 
@@ -287,7 +291,8 @@ public partial class World : Singleton<World>
 		for (var i = 0; i < _pixels.Count; i++)
 		{
 			Pixel pixel = _pixels[i];
-			if (CheckPixel((Vector2I)pixel.GlobalPosition))
+			if (pixel.Lifetime < 1.0f) continue;
+			if (pixel.WasFree && CheckPixel((Vector2I)pixel.GlobalPosition))
 			{
 				// Step back until reaching an empty pixel.
 				float stepSize = 0.1f;
@@ -297,7 +302,7 @@ public partial class World : Singleton<World>
 					Vector2I pos = (Vector2I)(pixel.GlobalPosition - dist * pixel._velocity.Normalized());
 					if (!CheckPixel(pos))
 					{
-						_worldImage.SetPixel(pos.X, pos.Y, new Color(1.0f, 1.0f, 1.0f, 1.0f));
+						//_worldImage.SetPixel(pos.X, pos.Y, new Color(1.0f, 1.0f, 1.0f, 1.0f));
 						toRemove.Add(i);
 						_worldImageDirty = true;
 						break;
@@ -310,6 +315,10 @@ public partial class World : Singleton<World>
 						break;
 					}
 				}
+			}
+			else
+			{
+				pixel.WasFree = true;
 			}
 		}
 

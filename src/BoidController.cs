@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 
 public partial class BoidController : Singleton<BoidController>
 {
-    [Export] private PackedScene _boid;
-    [Export] public float _boidRadius = 2.0f;
+    [Export] private PackedScene _boidScene;
+    [Export] private PackedScene _houseScene;
     
     // Compute
     private RenderingDevice _rd;
@@ -19,11 +19,15 @@ public partial class BoidController : Singleton<BoidController>
     {
         public Vector2 position;
         public Vector2 velocity;
+        
         public Vector2 toSurface;
         public float dir;
+        public int type;
+        
+        public float radius;
         public float padding1;
-        //public float padding2;
-        //public float padding3;
+        public float padding2;
+        public float padding3;
     }
 
     private Rid _buffer;
@@ -33,13 +37,29 @@ public partial class BoidController : Singleton<BoidController>
 
     private int MAX_BOIDS = 4096;
     private int _activeBoids = 0;
+    private float _replicationCountdown;
+    
+    public enum BoidType
+    {
+        Inactive = 0,
+        Glorp = 1,
+        House = 2,
+    }
+    
+    public int NumGlorps = 0;
+    public int NumHouses = 0;
 
     private byte[] _boidData;
     private Dictionary<int, Node2D> _boids = new Dictionary<int, Node2D>();
     private Dictionary<Node2D, int> _boidsToData = new Dictionary<Node2D, int>();
 
-    public int ActiveBoids => _activeBoids;
     public float Gravity => 50.0f;
+    public float ReplicationRate => Mathf.Log(BoidController.Instance.NumGlorps);
+    public float ReplicationCountdownMax => 100.0f;
+    public float ReplicationProgress => _replicationCountdown / ReplicationCountdownMax;
+    
+    public float GlorpRadius = 2.0f;
+    public float DigFrequency = 5.0f;
     
     public BoidData DataForBoid(Boid boid)
     {
@@ -70,9 +90,10 @@ public partial class BoidController : Singleton<BoidController>
             // Defaults.
             for (int i = 0; i < MAX_BOIDS; i++)
             {
-                bufferSpan[i].position = World.Instance.Centre - new Vector2(0.0f, World.Instance.Radius + 64.0f);
+                bufferSpan[i].position = new Vector2(0.0f, 0.0f);//World.Instance.Centre - new Vector2(0.0f, World.Instance.Radius + 64.0f);
                 bufferSpan[i].velocity = new Vector2(0.0f, 0.0f);
-                bufferSpan[i].dir = ((float)(Utils.Rng.Randi() % 2) - 0.5f) * 2.0f;
+                bufferSpan[i].dir = (Utils.Rng.Randi() % 2 - 0.5f) * 2.0f;
+                bufferSpan[i].type = 0;
             }
 
             _buffer = _rd.StorageBufferCreate((uint)(MAX_BOIDS * bufferSize), buffer);
@@ -93,16 +114,47 @@ public partial class BoidController : Singleton<BoidController>
         };
     }
 
-    public void SpawnBoid()
+    private bool _spawnedNewBoid;
+    private int _spawnedId;
+    private Vector2 _newBoidPosition;
+    private BoidType _newBoidType;
+    private float _newSpawnedRadius;
+
+    public void SpawnGlorp()
     {
         if (_activeBoids < MAX_BOIDS)
         {
-            _boids[_activeBoids] = _boid.Instantiate<Node2D>();
+            _boids[_activeBoids] = _boidScene.Instantiate<Node2D>();
             _boids[_activeBoids].Visible = false;
             AddChild(_boids[_activeBoids]);
             _boidsToData[_boids[_activeBoids]] = _activeBoids;
+
+            _spawnedNewBoid = true;
+            _spawnedId = _activeBoids;
+            _newBoidPosition = World.Instance.Centre - new Vector2(0.0f, World.Instance.Radius + 64.0f);
+            _newBoidType = BoidType.Glorp;
+            _newSpawnedRadius = GlorpRadius;
+            
             _activeBoids++;
         }
+    }
+
+    public void SpawnHouse()
+    {
+        _boids[_activeBoids] = _houseScene.Instantiate<Node2D>();
+        _boids[_activeBoids].Visible = false;
+        AddChild(_boids[_activeBoids]);
+        _boidsToData[_boids[_activeBoids]] = _activeBoids;
+        
+        _spawnedNewBoid = true;
+        _spawnedId = _activeBoids;
+
+        float height = World.Instance.Radius + 64.0f;
+        _newBoidPosition = World.Instance.Centre + (new Vector2(Utils.Rng.Randf() - 0.5f, Utils.Rng.Randf() - 0.5f)).Normalized() * height;
+        _newBoidType = BoidType.House;
+        _newSpawnedRadius = GlorpRadius * 2.0f;
+        
+        _activeBoids++;
     }
 
     public override void _Process(double delta)
@@ -115,13 +167,27 @@ public partial class BoidController : Singleton<BoidController>
         // Copy boid buffers to CPU for rendering.
         _boidData = _rd.BufferGetData(_buffer, 0, (uint) (MAX_BOIDS * Marshal.SizeOf<BoidData>()));
         Span<BoidData> dataSpan = MemoryMarshal.Cast<byte, BoidData>(new Span<byte>(_boidData, 0, _boidData.Length));
-        
+
+        NumGlorps = 0;
+        NumHouses = 0;
         for (int i = 0; i < _activeBoids; i++)
         {
             //GD.Print($"Boid #{i}: Position: {dataSpan[i].position} Velocity: {dataSpan[i].velocity}");
             //GD.Print($"Boid #{i}: ToSurface: {dataSpan[i].toSurface}");
             _boids[i].GlobalPosition = dataSpan[i].position;
+            Vector2 toCentre = World.Instance.ToCentre(dataSpan[i].position);
+            _boids[i].GlobalRotation = Mathf.Atan2(-toCentre.X, toCentre.Y);
             _boids[i].Visible = true;
+
+            if (dataSpan[i].type == (int)BoidType.Glorp) NumGlorps++;
+            if (dataSpan[i].type == (int)BoidType.House) NumHouses++;
+        }
+
+        _replicationCountdown += ReplicationRate * (float)delta;
+        if (_replicationCountdown > ReplicationCountdownMax && NumGlorps < Game.Instance.MaxPop)
+        {
+            _replicationCountdown = 0.0f;
+            SpawnGlorp();
         }
     }
 
@@ -136,14 +202,21 @@ public partial class BoidController : Singleton<BoidController>
         List<float> constants =
         [
             _activeBoids,
-            Instance._boidRadius,
             World.Instance.Size.X,
             World.Instance.Size.Y,
             World.Instance.SDFDistMod,
             deltaTime,
             Gravity, // gravity
-            10.0f, // walk
+            10.0f, // walk speed
+            _spawnedNewBoid ? 1.0f : 0.0f,
+            _spawnedId,
+            _newBoidPosition.X,
+            _newBoidPosition.Y,
+            (float)_newBoidType,
+            _newSpawnedRadius,
         ];
+
+        _spawnedNewBoid = false;
 
         // Padding
         int alignment = 4;
@@ -154,7 +227,7 @@ public partial class BoidController : Singleton<BoidController>
         Buffer.BlockCopy(constants.ToArray(), 0, constantsByte, 0, constantsByte.Length);
         _rd.ComputeListSetPushConstant(computeList, constantsByte, (uint)constantsByte.Length);
 
-        int groups = _activeBoids;//Mathf.CeilToInt(_activeBoids / 1024.0f);
+        int groups = Mathf.CeilToInt(_activeBoids / 1024.0f);
         _rd.ComputeListDispatch(computeList, (uint)groups, 1, 1);
         _rd.ComputeListEnd();
         _rd.Submit();

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://celxdilw6hjt0"]
+[gd_scene load_steps=10 format=3 uid="uid://celxdilw6hjt0"]
 
 [ext_resource type="Script" path="res://src/Game.cs" id="1_wfm74"]
 [ext_resource type="Script" path="res://src/World.cs" id="1_xdkc1"]
@@ -8,11 +8,11 @@
 [ext_resource type="Script" path="res://src/debug/DebugDraw.cs" id="4_1uo1d"]
 [ext_resource type="Script" path="res://src/BoidController.cs" id="5_8eb56"]
 [ext_resource type="PackedScene" uid="uid://b2el2ufygdkgk" path="res://assets/scenes/Boid.tscn" id="6_tnhim"]
+[ext_resource type="PackedScene" uid="uid://svdwaxxr1e2w" path="res://assets/scenes/House.tscn" id="9_fdln2"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_wfm74")
-_initialBoids = 200
-_initialSpawnRate = 0.1
+_initialSpawnRate = 1.0
 
 [node name="World" type="Node" parent="." node_paths=PackedStringArray("_sprite")]
 script = ExtResource("1_xdkc1")
@@ -37,4 +37,5 @@ script = ExtResource("4_1uo1d")
 
 [node name="BoidController" type="Node" parent="."]
 script = ExtResource("5_8eb56")
-_boid = ExtResource("6_tnhim")
+_boidScene = ExtResource("6_tnhim")
+_houseScene = ExtResource("9_fdln2")
