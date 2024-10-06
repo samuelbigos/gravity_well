@@ -24,13 +24,20 @@ public partial class GameCamera : Camera2D
 
 	public override void _Process(double delta)
 	{
-		if (Input.IsActionJustPressed("camera_zoom_in"))
+		if (Game.Instance.WonGame)
 		{
-			Zoom += Zoom * _zoomSpeed;
+			Zoom -= Zoom * _zoomSpeed * 2.0f;
 		}
-		if (Input.IsActionJustPressed("camera_zoom_out"))
+		else
 		{
-			Zoom -= Zoom * _zoomSpeed;
+			if (Input.IsActionJustPressed("camera_zoom_in"))
+			{
+				Zoom += Zoom * _zoomSpeed;
+			}
+			if (Input.IsActionJustPressed("camera_zoom_out"))
+			{
+				Zoom -= Zoom * _zoomSpeed;
+			}
 		}
 	}
 }

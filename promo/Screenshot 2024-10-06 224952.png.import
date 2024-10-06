@@ -1,0 +1,34 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://dho43ej2x0wi3"
+path="res://.godot/imported/Screenshot 2024-10-06 224952.png-a674ce3ae0d322fec154402cb75fc168.ctex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://promo/Screenshot 2024-10-06 224952.png"
+dest_files=["res://.godot/imported/Screenshot 2024-10-06 224952.png-a674ce3ae0d322fec154402cb75fc168.ctex"]
+
+[params]
+
+compress/mode=0
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=false
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=1

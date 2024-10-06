@@ -10,17 +10,24 @@ public partial class Game : Singleton<Game>
 	private int _maxBoids;
 	private float _initialSpawnTimer = 0.0f;
 	private int _spaceshipId;
+
+	public bool WonGame = false;
 	
 	public override void _Ready()
 	{
-		DebugImGui.Instance.RegisterWindow("game", "Gravity Well", _ImGuiStats);
-		DebugImGui.Instance.SetCustomWindowEnabled("game", true);
+		Engine.TimeScale = 0.0f;
+		
+		DebugImGui.Instance.RegisterWindow("intro", "Gravity Well", _ImGuiIntro);
+		DebugImGui.Instance.SetCustomWindowEnabled("intro", true);
+		
+		DebugImGui.Instance.RegisterWindow("game", "Data", _ImGuiStats);
+		DebugImGui.Instance.SetCustomWindowEnabled("game", false);
 		
 		DebugImGui.Instance.RegisterWindow("build", "Construct", _ImGuiConstruct);
-		DebugImGui.Instance.SetCustomWindowEnabled("build", true);
+		DebugImGui.Instance.SetCustomWindowEnabled("build", false);
 		
 		DebugImGui.Instance.RegisterWindow("research", "Research", _ImGuiResearch);
-		DebugImGui.Instance.SetCustomWindowEnabled("research", true);
+		DebugImGui.Instance.SetCustomWindowEnabled("research", false);
 
 		_maxBoids = _initialBoids;
 		_initialSpawnTimer = _initialSpawnRate;
@@ -29,9 +36,20 @@ public partial class Game : Singleton<Game>
 	public float _replicationProgress => _replicationCountdown / Metagame.Instance.ReplicationCountdownMax;
 	private float _replicationCountdown = 0.0f;
 
+	[Export] private Label _winText;
+	
 	private bool _firstFrame = true;
 	public override void _Process(double delta)
 	{
+		if (WonGame)
+		{
+			_winText.Visible = true;
+		}
+		else
+		{
+			_winText.Visible = false;
+		}
+		
 		if (_firstFrame)
 		{
 			Vector2 position = World.Instance.Centre - new Vector2(0.0f, (World.Instance.Radius + 10.0f));
@@ -78,7 +96,7 @@ public partial class Game : Singleton<Game>
 		if (ImGui.Button($"Construct {item} ({cost:F1})"))
 		{
 			Metagame.Instance.Materials -= cost;
-			BoidController.Instance.SpawnBuilding(scene, type, type == BoidController.BoidType.SpaceLaser ? RandomPosition(48.0f) : RandomPosition(), radius);
+			BoidController.Instance.SpawnBuilding(scene, type, type == BoidController.BoidType.Orbiter ? RandomPosition(48.0f) : RandomPosition(), radius);
 			return true;
 		}
 		if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) 
@@ -118,13 +136,36 @@ public partial class Game : Singleton<Game>
 		ImGui.EndDisabled();
 		return false;
 	}
-	
-	// TODO: big dig throwing (scattered pixels damage more pixels)
-	// TODO: glorp space agency
-	// TODO: mining space lasers
 
+	private void _ImGuiIntro()
+	{
+		ImGui.PushTextWrapPos(512.0f);
+		ImGui.Text("Glorpkind (the race of Glorps) finds itself in a bit of a predicament. They have crash landed on a remove and foreign planet! " +
+		           "It is up to you to help them dig down to the core, to recover the mysterious alien artifact that is buried there. Perhaps it can provide" +
+		           " the salvation that will save them all.");
+		ImGui.Spacing();
+		ImGui.Text("Advise the Glorps on how to best spend their resources, to accelerate the digging process. When you click the button below, a number of " +
+		           "extra windows will appear. These windows give you stats on your Glorp population and economy, and allow you to spend materials as you see fit.");
+		ImGui.PopTextWrapPos();
+		
+		if (ImGui.Button("Help the Glorps escape the Gravity Well"))
+		{
+			Engine.TimeScale = 1.0f;
+			DebugImGui.Instance.SetCustomWindowEnabled("game", true);
+			DebugImGui.Instance.SetCustomWindowEnabled("build", true);
+			DebugImGui.Instance.SetCustomWindowEnabled("research", true);
+			DebugImGui.Instance.SetCustomWindowEnabled("intro", false);
+		}
+	}
+	
 	private void _ImGuiStats()
 	{
+		float timescale = (float)Engine.TimeScale;
+		if (ImGui.SliderFloat("Time Scale", ref timescale, 0.0f, 3.0f))
+		{
+			Engine.TimeScale = timescale;
+		}
+		
 		if (ImGui.CollapsingHeader("Population", ImGuiTreeNodeFlags.DefaultOpen))
 		{
 			ImGui.Text($"Glorp Count: {Metagame.Instance.GlorpCount} / {Metagame.Instance.GlorpCountMax}");
@@ -148,9 +189,6 @@ public partial class Game : Singleton<Game>
 				ImGui.SetTooltip("Most processes consume energy, make sure you have enough generation to fuel your exploits!");
 			}
 			ImGui.Text($"Energy Generation Rate: {Metagame.Instance.EnergyRate} per second");
-			// if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
-			// 	ImGui.SetTooltip("");
-			// }
 		}
 		if (ImGui.CollapsingHeader("Gathering", ImGuiTreeNodeFlags.DefaultOpen))
 		{
@@ -216,12 +254,20 @@ public partial class Game : Singleton<Game>
 				// Space Centre Constructions
 				if (ImGui.CollapsingHeader("Glorp Space Centre", ImGuiTreeNodeFlags.DefaultOpen))
 				{
-					if (ConstructionHelper("Space Lasers", "Did you think the first piece of Gnorpnology to be unlocked through the Space Centre would be anything else?",
-						    Metagame.Instance.SpaceLaserCost, Metagame.Instance.NumSpaceLasers, Resources.Instance.SpaceLaserScene, BoidController.BoidType.SpaceLaser,
+					ImGui.Indent();
+					if (ConstructionHelper("Space Lazers", "Did you think the first piece of Gnorpnology to be unlocked through the Space Centre would be anything else?",
+						    Metagame.Instance.SpaceLaserCost, Metagame.Instance.NumSpaceLasers, Resources.Instance.SpaceLaserScene, BoidController.BoidType.Orbiter,
 						    Metagame.ExcavatorRadius))
 					{
 						Metagame.Instance.NumSpaceLasers++;
 					}
+					if (ConstructionHelper("Space Solar Sail", "Solar sails capture solar energy and transport it telepathically into machines and stuff.",
+						    Metagame.Instance.SolarSailCost, Metagame.Instance.NumSolarSails, Resources.Instance.SolarSailScene, BoidController.BoidType.Orbiter,
+						    Metagame.ExcavatorRadius))
+					{
+						Metagame.Instance.NumSolarSails++;
+					}
+					ImGui.Unindent();
 				}
 			}
 		}
@@ -233,6 +279,12 @@ public partial class Game : Singleton<Game>
 			    Metagame.Instance.ResearchJumpCost, Metagame.Instance.ResearchJumpLevel, false))
 		{
 			Metagame.Instance.ResearchJumpLevel += 1;
+		}
+		
+		if (ResearchHelper("Forced Replication", "Glorps are forced to replicate more often with each other, whatever that means. For the greater good.",
+			    Metagame.Instance.ResearchForcedReplicationCost, Metagame.Instance.ResearchForcedReplicationLevel, false))
+		{
+			Metagame.Instance.ResearchForcedReplicationLevel += 1;
 		}
 		
 		if (ResearchHelper("Offworld Catering", "While the Glorp situation might seem dire, stranded on a remote planet in the void of space, luckily somebody left a takeout menu here and the number is still active.",
@@ -261,16 +313,39 @@ public partial class Game : Singleton<Game>
 			Metagame.Instance.ResearchedNeutrinoCapture = true;
 		}
 		
-		if (ResearchHelper("Glorp Popping", "Sometimes, when a Glorp impacts the ground, a new Glorp will pop out. Adds progress to the next Glorp replacation when this happens.",
+		if (ResearchHelper("Glorp Popping", "Sometimes, when a Glorp impacts the ground, a new Glorp will pop out. Adds progress to the next Glorp replication when this happens.",
 			    Metagame.Instance.ResearchGlorpPoppingCost, Metagame.Instance.ResearchGlorpPoppingLevel, false))
 		{
 			Metagame.Instance.ResearchGlorpPoppingLevel += 1;
+		}
+		
+		if (ResearchHelper("Overdrive Drivers, Over", "Gives orders to the Glorps in charge of driving heavy machinery into overdrive. They drive over the ground much more effectively, dislodging more material at the cost of energy.",
+			    Metagame.BaseResearchOverdriveCost, 0, Metagame.Instance.ResearchedOverdrive))
+		{
+			Metagame.Instance.ResearchedOverdrive = true;
+		}
+		if (Metagame.Instance.ResearchedOverdrive)
+		{
+			ImGui.Indent();
+			ImGui.SliderFloat("Overdrive Excavator Level:", ref Metagame.Instance.OverdriveExcavatorScale, 1.0f, 5.0f);
+			ImGui.SliderFloat("Overdrive Space Lazer Level:", ref Metagame.Instance.OverdriveSpaceLaserScale, 1.0f, 5.0f);
+			ImGui.Unindent();
 		}
 		
 		if (ResearchHelper("Glorp Space Program", "To escape this planet, Glorps will need a space program that can compete with any other space program!",
 			    Metagame.BaseResearchGSPCost, 0, Metagame.Instance.ResearchedGSP))
 		{
 			Metagame.Instance.ResearchedGSP = true;
+		}
+
+		if (Metagame.Instance.ResearchedGSP)
+		{
+			if (ResearchHelper("Swole-zors",
+				    "Swole-zors.",
+				    Metagame.Instance.ResearchSwolasersCost, Metagame.Instance.ResearchSwolasersLevel, false))
+			{
+				Metagame.Instance.ResearchSwolasersLevel++;
+			}
 		}
 	}
 }

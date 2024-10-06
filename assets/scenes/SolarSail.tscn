@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://bfp757jxg8i83"]
+
+[ext_resource type="Texture2D" uid="uid://di5vcfujn6q34" path="res://assets/sprites/solar_sail.png" id="1_ss5m8"]
+
+[node name="SolarSail" type="Node2D"]
+z_index = -2
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("1_ss5m8")

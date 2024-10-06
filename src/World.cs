@@ -8,6 +8,7 @@ public partial class World : Singleton<World>
 {
 	[Export] private int _worldResolution = 512;
 	[Export] private float _worldRadius = 256.0f;
+	[Export] private float _worldCoreRadius = 32.0f;
 	[Export] private Sprite2D _sprite;
 	[Export] private float _sdfDistMod = 10.0f;
 	[Export] private PackedScene _pixelScene;
@@ -62,7 +63,11 @@ public partial class World : Singleton<World>
 			{
 				if (new Vector2I(x, y).LengthSquared() < digRadius * digRadius)
 				{
-					DigPixel(position, (Vector2I)(position + digOffset + new Vector2(x, y)), damage);
+					Vector2 digPosition = position + digOffset + new Vector2(x, y);
+					if (IsCorePixel(digPosition)) // Can't dig the core.
+						continue;
+					
+					DigPixel(position, (Vector2I)(digPosition), damage);
 				}
 			}
 		}
@@ -70,6 +75,11 @@ public partial class World : Singleton<World>
 		{
 			FloatingDamageManager.Instance.AddNew(position, Metagame.Instance.Materials - beforeMaterials);
 		}
+	}
+
+	private bool IsCorePixel(Vector2 position)
+	{
+		return (position - Centre).LengthSquared() < _worldCoreRadius * _worldCoreRadius;
 	}
 
 	private void DigPixel(Vector2 boidPos, Vector2I pixel, float damage)
@@ -80,7 +90,7 @@ public partial class World : Singleton<World>
 			{
 				DestroyPixel(pixel);
 			}
-			CreatePixelParticle(boidPos);
+			CreatePixelParticle(boidPos, damage);
 			Metagame.Instance.Materials += materials;
 			_worldImageDirty = true;
 		}
@@ -92,7 +102,7 @@ public partial class World : Singleton<World>
 		_worldImageDirty = true;
 	}
 
-	private void CreatePixelParticle(Vector2 position)
+	private void CreatePixelParticle(Vector2 position, float damage)
 	{
 		Pixel thePixel = _pixelScene.Instantiate<Pixel>();
 		_pixels.Add(thePixel);
@@ -100,7 +110,7 @@ public partial class World : Singleton<World>
 		thePixel.GlobalPosition = position;
 		Vector2 toCentre = ToCentre(position);
 		Vector2 tangent = toCentre.ToNumerics().Rot90().ToGodot() * (Utils.Rng.Randf() - 1.0f);
-		thePixel._velocity = (tangent * 0.5f - toCentre) * Metagame.Instance.DigEjectionSpeed;
+		thePixel._velocity = (tangent * 0.5f - toCentre) * Metagame.Instance.DigEjectionSpeed(damage);
 	}
 
 	private bool DamagePixel(Vector2I pixel, float damage, out float materials)
@@ -256,8 +266,15 @@ public partial class World : Singleton<World>
 		Rid worldImageTextureRid = _rd.TextureCreate(_format, new RDTextureView(), [_worldImage.GetData()]);
 		Rid worldImageUniformRid = CreateUniform(worldImageTextureRid, _worldSimShader);
 		
+		float[] constants = [_time, 0.0f, 0.0f, 0.0f];
+		byte[] constantsByte = new byte[constants.Length * 4];
+		Buffer.BlockCopy(constants, 0, constantsByte, 0, constantsByte.Length);
+		
 		ExecuteCompute(_worldSimPipeline, [_swapSets[_worldSimShader][InputSwapIndex], 
-			_swapSets[_worldSimShader][OutputSwapIndex], worldImageUniformRid]);
+			_swapSets[_worldSimShader][OutputSwapIndex], worldImageUniformRid], (computeList) =>
+		{
+			_rd.ComputeListSetPushConstant(computeList, constantsByte, (uint) constantsByte.Length);
+		});
 		
 		_rd.FreeRid(worldImageTextureRid);
 		
@@ -342,8 +359,38 @@ public partial class World : Singleton<World>
 		_rd.Sync();
 	}
 
+	private void WinCondition()
+	{
+		Game.Instance.WonGame = true;
+	}
+
+	private float _time;
 	public override void _Process(double delta)
 	{
+		_time += (float)delta;
+		
+		// Check if the core is free.
+		int corePixelsRemaining = 0;
+		Vector2I start = (Vector2I)(Centre - new Vector2(_worldCoreRadius + 2.0f, _worldCoreRadius + 2.0f));
+		Vector2I end = (Vector2I)(Centre + new Vector2(_worldCoreRadius + 2.0f, _worldCoreRadius + 2.0f));
+		for (int x = start.X; x <= end.X; x++)
+		{
+			for (int y = start.Y; y <= end.Y; y++)
+			{
+				Vector2 position = new Vector2(x, y);
+				if (IsCorePixel(position))
+					continue;
+				if ((position - Centre).LengthSquared() < _worldCoreRadius + 2.0f)
+					continue;
+				if (CheckPixel((Vector2I)position))
+					corePixelsRemaining++;
+			}
+		}
+		if (corePixelsRemaining < 10)
+		{
+			WinCondition();
+		}
+		
 		// Merge loose pixels.
 		List<int> toRemove = new List<int>();
 		for (var i = 0; i < _pixels.Count; i++)

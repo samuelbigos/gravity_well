@@ -5,12 +5,9 @@ layout(set = 0, binding = 0, rgba8) uniform image2D _input;
 layout(set = 1, binding = 0, rgba8) uniform image2D _output;
 layout(set = 2, binding = 0, rgba8) uniform image2D _worldImage;
 
-ivec2 dirs[] = {
-	ivec2(0, -1),
-	ivec2(-1, 0),
-	ivec2(1, 0),
-	ivec2(0, 1),
-};
+layout(push_constant, std430) uniform Params {
+	float time;
+} params;
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 void main() 
@@ -21,21 +18,14 @@ void main()
 
 	float val = imageLoad(_worldImage, uv).r;
 
-	// check all surrounding pixels, if no support, move this pixel down.
-	bool connected = false;
-	for (int i = 0; i < 8; i++)
-	{
-		if (imageLoad(_worldImage, uv + dirs[i]).r > 0.5)
-		{
-			connected = true;
-			break;
-		}
-	}
-
-	// if (!connected)
+	// vec2 centre = vec2(256, 256);
+	// float dist = length(centre - uv);
+	// if (dist < 32.0)
 	// {
-	// 	imageStore(_output, uv, vec4(val, val, val, 1.0));
+	// 	imageStore(_output, uv, vec4(sin(params.time), sin(params.time + 3.14 * 0.66), sin(params.time + 3.14 * 1.33), 1.0));
 	// }
-
-	imageStore(_output, uv, vec4(val, val, val, 1.0));
+	// else
+	{
+		imageStore(_output, uv, vec4(val, val, val, 1.0));
+	}	
 }

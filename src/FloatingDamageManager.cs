@@ -19,6 +19,8 @@ public partial class FloatingDamageManager : Singleton<FloatingDamageManager>
 		label.Text = $"{damage:F0}";
 		_lifetimes.Add(_textLifetime);
 		_basePositions.Add(position);
+		// Vector2 toCentre = World.Instance.ToCentre(position);
+		// label.Rotation = Mathf.Atan2(-toCentre.X, toCentre.Y);
 	}
 
 	public override void _Process(double delta)
@@ -36,7 +38,7 @@ public partial class FloatingDamageManager : Singleton<FloatingDamageManager>
 			else
 			{
 				_labels[i].GlobalPosition = _basePositions[i] - World.Instance.ToCentre(_basePositions[i]) 
-				  * (15.0f + (float)Utils.Ease_CubicIn(_lifetimes[i] / _textLifetime) * -10.0f)
+				  * (10.0f + (float)Utils.Ease_CubicIn(_lifetimes[i] / _textLifetime) * -10.0f)
 					- _labels[i].Size * 0.5f;
 			}
 		}

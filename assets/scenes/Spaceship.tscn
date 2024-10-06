@@ -1,8 +1,7 @@
 [gd_scene load_steps=2 format=3 uid="uid://cbjrdw6udu1wb"]
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_8eoel"]
-load_path = "res://.godot/imported/spaceship.png-58498873603dbb319d28b42f0ee36280.ctex"
+[ext_resource type="Texture2D" uid="uid://d2u6po3yui2mv" path="res://assets/sprites/spaceship.png" id="1_bjg46"]
 
 [node name="Spaceship" type="Sprite2D"]
 texture_filter = 1
-texture = SubResource("CompressedTexture2D_8eoel")
+texture = ExtResource("1_bjg46")

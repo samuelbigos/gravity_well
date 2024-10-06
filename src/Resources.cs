@@ -11,4 +11,5 @@ public partial class Resources : Singleton<Resources>
 	[Export] public PackedScene SolarFarmScene;
 	[Export] public PackedScene SpaceCentreScene;
 	[Export] public PackedScene SpaceLaserScene;
+	[Export] public PackedScene SolarSailScene;
 }

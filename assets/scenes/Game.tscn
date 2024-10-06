@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://celxdilw6hjt0"]
+[gd_scene load_steps=24 format=3 uid="uid://celxdilw6hjt0"]
 
 [ext_resource type="Script" path="res://src/Game.cs" id="1_wfm74"]
 [ext_resource type="Script" path="res://src/World.cs" id="1_xdkc1"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://src/debug/DebugImGui.cs" id="3_hns8u"]
 [ext_resource type="PackedScene" uid="uid://bx38lhgop2ik6" path="res://assets/scenes/Pixel.tscn" id="3_xaovw"]
 [ext_resource type="Script" path="res://src/debug/DebugDraw.cs" id="4_1uo1d"]
+[ext_resource type="Shader" path="res://assets/Planet.gdshader" id="4_ts3br"]
 [ext_resource type="Script" path="res://src/boids/BoidController.cs" id="5_8eb56"]
 [ext_resource type="PackedScene" uid="uid://b2el2ufygdkgk" path="res://assets/scenes/Glorp.tscn" id="6_tnhim"]
 [ext_resource type="PackedScene" uid="uid://svdwaxxr1e2w" path="res://assets/scenes/House.tscn" id="9_fdln2"]
@@ -19,20 +20,26 @@
 [ext_resource type="PackedScene" uid="uid://d3ktw2gb8weqh" path="res://assets/scenes/SpaceCentre.tscn" id="16_n6hkh"]
 [ext_resource type="PackedScene" uid="uid://cvnu5hxk7nrdy" path="res://assets/scenes/FloatingDamage.tscn" id="16_pdwqb"]
 [ext_resource type="PackedScene" uid="uid://dasuul5edekmm" path="res://assets/scenes/SpaceLaser.tscn" id="17_0oxvf"]
+[ext_resource type="PackedScene" uid="uid://bfp757jxg8i83" path="res://assets/scenes/SolarSail.tscn" id="19_5hx3d"]
+[ext_resource type="Script" path="res://src/UI.cs" id="20_tlsch"]
 
-[node name="Game" type="Node2D"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_g1qhr"]
+shader = ExtResource("4_ts3br")
+
+[node name="Game" type="Node2D" node_paths=PackedStringArray("_winText")]
 script = ExtResource("1_wfm74")
+_winText = NodePath("CanvasLayer/Control/WinScreen")
 
-[node name="World" type="Node" parent="." node_paths=PackedStringArray("_sprite", "_label")]
+[node name="World" type="Node" parent="." node_paths=PackedStringArray("_sprite")]
 script = ExtResource("1_xdkc1")
 _worldRadius = 128.0
 _sprite = NodePath("WorldTexture")
 _pixelScene = ExtResource("3_xaovw")
-_label = NodePath("")
 
 [node name="WorldTexture" type="Sprite2D" parent="World"]
 z_index = -1
 texture_filter = 1
+material = SubResource("ShaderMaterial_g1qhr")
 centered = false
 
 [node name="GameCamera" type="Camera2D" parent="." node_paths=PackedStringArray("_world")]
@@ -61,7 +68,82 @@ ExcavatorScene = ExtResource("14_if22u")
 SolarFarmScene = ExtResource("15_jx008")
 SpaceCentreScene = ExtResource("16_n6hkh")
 SpaceLaserScene = ExtResource("17_0oxvf")
+SolarSailScene = ExtResource("19_5hx3d")
 
 [node name="FloatingDamage" type="Node" parent="."]
 script = ExtResource("15_tij44")
 _floatingDamageScene = ExtResource("16_pdwqb")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer" node_paths=PackedStringArray("_materials", "_energy", "_excavated")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 791.0
+offset_right = -791.0
+offset_bottom = -898.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("20_tlsch")
+_materials = NodePath("Materials")
+_energy = NodePath("Energy")
+_excavated = NodePath("Excavated")
+
+[node name="WinScreen" parent="CanvasLayer/Control" instance=ExtResource("16_pdwqb")]
+layout_mode = 1
+offset_left = -403.0
+offset_top = 138.0
+offset_right = 403.0
+offset_bottom = 450.0
+theme_override_font_sizes/font_size = 30
+text = "With a jubilant cry, Jeremiah Glorpal plunges his space one final time into the firmament, and hits the core. The ground begins to shudder as this alien artifact rouses from its deep slumber. Previously hidden, many doorways across the entire surface begin to open to allow the Glorps to enter. First timidly, and then with fervor. 
+
+They have finally made it, they are going home."
+autowrap_mode = 3
+
+[node name="Excavated" parent="CanvasLayer/Control" instance=ExtResource("16_pdwqb")]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_left = -46.0
+offset_top = 29.0
+offset_right = 47.0
+offset_bottom = 57.0
+grow_vertical = 1
+theme_override_font_sizes/font_size = 20
+text = "TestLabel"
+horizontal_alignment = 0
+
+[node name="Materials" parent="CanvasLayer/Control" instance=ExtResource("16_pdwqb")]
+layout_mode = 1
+anchors_preset = 4
+anchor_left = 0.0
+anchor_right = 0.0
+offset_left = 0.0
+offset_top = -6.5
+offset_right = 42.0
+offset_bottom = 6.5
+grow_horizontal = 1
+theme_override_colors/font_color = Color(0.741176, 0.168627, 0.258824, 1)
+theme_override_font_sizes/font_size = 20
+text = "TestLabel"
+horizontal_alignment = 0
+
+[node name="Energy" parent="CanvasLayer/Control" instance=ExtResource("16_pdwqb")]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -93.0
+offset_top = -14.0
+offset_right = 0.0
+offset_bottom = 14.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.957403, 0.796831, 0.200105, 1)
+theme_override_font_sizes/font_size = 20
+text = "TestLabel"
+horizontal_alignment = 0

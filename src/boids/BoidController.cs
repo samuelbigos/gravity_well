@@ -43,7 +43,7 @@ public partial class BoidController : Singleton<BoidController>
         Spaceship = 3,
         ResearchedBuilding = 4,
         Excavator = 5,
-        SpaceLaser = 6,
+        Orbiter = 6,
     }
     
     public int NumGlorps = 0;

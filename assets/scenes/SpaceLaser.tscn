@@ -15,5 +15,4 @@ texture_filter = 1
 texture = ExtResource("2_egrsx")
 
 [node name="LaserSprite" type="Sprite2D" parent="."]
-position = Vector2(0, 35)
 texture = ExtResource("3_qymim")

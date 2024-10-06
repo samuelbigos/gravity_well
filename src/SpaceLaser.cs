@@ -11,6 +11,7 @@ public partial class SpaceLaser : Node2D
     private float _digTimer;
     private float _laserDigTimer;
     private bool _lasering;
+    private BoidController.BoidType _type = BoidController.BoidType.Orbiter;
 	
     public override void _Ready()
     {
@@ -21,7 +22,7 @@ public partial class SpaceLaser : Node2D
     public override void _Process(double delta)
     {
         _digTimer -= (float)delta;
-        if (!_lasering && _digTimer < 0.0f && Metagame.Instance.Dig(true))
+        if (!_lasering && _digTimer < 0.0f && Metagame.Instance.Dig(_type))
         {
             _digTimer = _laserTime;
             _lasering = true;
@@ -31,11 +32,20 @@ public partial class SpaceLaser : Node2D
         {
             _laserSprite.Visible = true;
             _laserDigTimer -= (float) delta;
-            if (_laserDigTimer < 0.0f)
+            bool canLaser = Metagame.Instance.Dig(_type);
+            if (!canLaser)
+            {
+                _digTimer = 0.0f;
+            }
+            else if (_laserDigTimer < 0.0f)
             {
                 _laserDigTimer = _laserDigFrequency;
                 Vector2 position = World.Instance.ProjectOntoPixel(GlobalPosition, World.Instance.ToCentre(GlobalPosition));
-                World.Instance.Dig(position, Metagame.SpaceLaserRadius, Metagame.Instance.DigDamage() * 1.0f);
+                float dist = (position - GlobalPosition).Length();
+                float width = 1.0f;
+                _laserSprite.Scale = new Vector2(Metagame.Instance.SpaceLaserRadius, dist);
+                _laserSprite.Position = new Vector2(0.0f, 3.0f + dist * 0.5f);
+                World.Instance.Dig(position, Metagame.Instance.SpaceLaserRadius * 4.0f - 2.0f, Metagame.Instance.DigDamage(_type));
             }
             if (_digTimer < 0.0f)
             {

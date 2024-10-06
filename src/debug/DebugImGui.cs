@@ -30,8 +30,8 @@ public partial class DebugImGui : Node
     {
         base._Ready();
         
-        RegisterWindow("performance", "Performance", _OnImGuiLayoutPerformance);
-        RegisterWindow("debug", "Debug", _OnImGuiLayoutDebug);
+        //RegisterWindow("performance", "Performance", _OnImGuiLayoutPerformance);
+        //RegisterWindow("debug", "Debug", _OnImGuiLayoutDebug);
         
         _timescale = (float)Engine.TimeScale;
     }
